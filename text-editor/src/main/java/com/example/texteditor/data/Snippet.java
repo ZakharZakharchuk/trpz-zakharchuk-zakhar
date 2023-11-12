@@ -1,4 +1,4 @@
-package com.example.texteditor;
+package com.example.texteditor.data;
 
 import lombok.Data;
 

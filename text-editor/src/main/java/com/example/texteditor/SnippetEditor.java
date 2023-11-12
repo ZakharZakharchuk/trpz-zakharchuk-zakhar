@@ -1,5 +1,7 @@
 package com.example.texteditor;
 
+import com.example.texteditor.data.Snippet;
+import com.example.texteditor.repositry.SnippetRepository;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,7 +17,7 @@ import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.StyledDocument;
 
-public class SnipetEditor {
+public class SnippetEditor {
     public void createSnippetDialog(JFrame parentFrame) {
         JDialog dialog = new JDialog(parentFrame, "Create New Snippet", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -42,7 +44,7 @@ public class SnipetEditor {
 
                     snippetRepository.saveSnippet(newSnippet);
 
-                    dialog.dispose(); // Close the dialog
+                    dialog.dispose();
                 }
             }
         });
@@ -79,7 +81,6 @@ public class SnipetEditor {
           doc,
           String snippetCode) {
         JButton snippetButton = new JButton(snippetName);
-        snippetButton.addActionListener(new Editor().getActionListener());
         snippetButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
