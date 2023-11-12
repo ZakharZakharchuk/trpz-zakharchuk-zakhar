@@ -1,5 +1,6 @@
-package com.example.texteditor;
+package com.example.texteditor.repositry;
 
+import com.example.texteditor.data.Snippet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;

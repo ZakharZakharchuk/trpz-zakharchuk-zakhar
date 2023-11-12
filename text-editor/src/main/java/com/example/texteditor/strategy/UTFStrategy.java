@@ -1,6 +1,5 @@
 package com.example.texteditor.strategy;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 public class UTFStrategy implements EncodingStrategy {

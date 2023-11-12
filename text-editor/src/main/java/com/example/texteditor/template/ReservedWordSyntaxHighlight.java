@@ -28,7 +28,7 @@ public class ReservedWordSyntaxHighlight extends SyntaxHighlightTemplate {
               "volatile", "while"
         ));
         for (String keyword : javaReservedWords) {
-            Pattern pattern = Pattern.compile(keyword + "(\\[\\])*");
+            Pattern pattern = Pattern.compile(keyword + "(\\[])*");
             Matcher matcher = pattern.matcher(text);
             while (matcher.find()) {
                 SyntaxHighlightCommand command = new SyntaxHighlightCommand(editor,

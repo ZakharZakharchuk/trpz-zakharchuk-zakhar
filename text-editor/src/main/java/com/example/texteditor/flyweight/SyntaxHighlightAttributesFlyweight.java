@@ -1,4 +1,4 @@
-package com.example.texteditor;
+package com.example.texteditor.flyweight;
 
 import java.awt.Color;
 import javax.swing.text.SimpleAttributeSet;

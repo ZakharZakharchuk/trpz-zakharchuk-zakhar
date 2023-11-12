@@ -4,22 +4,18 @@ import com.example.texteditor.command.Command;
 import com.example.texteditor.command.CommandHistory;
 import com.example.texteditor.command.CopyCommand;
 import com.example.texteditor.command.CutCommand;
-import com.example.texteditor.command.MacroCommand;
+import com.example.texteditor.command.OpenFileCommand;
 import com.example.texteditor.command.PasteCommand;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.texteditor.observer.Observer;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BoxLayout;
@@ -29,15 +25,12 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.WindowConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.StyledDocument;
-import org.springframework.util.ResourceUtils;
+import javax.swing.text.Element;
 
 public class Editor {
 
@@ -45,275 +38,116 @@ public class Editor {
     public String clipboard;
 
     private final CommandHistory history = new CommandHistory();
-    StyledDocument styledDocument;
-    private static List<MacroCommand> recordedCommands = new ArrayList<>();
-    private static boolean recording = false;
-    private static List<ActionEvent> recordedActions = new ArrayList<>();
-    private static List<String> recordedTextEdits = new ArrayList<>();
+    JFrame frame = new JFrame("Text editor (type & use buttons, Luke!)");
+    List<Integer> bookmarks = new ArrayList<>();
+    LineNumberPanel lineNumbers;
+    private final List<Observer> observers = new ArrayList<>();
 
-    public ActionListener getActionListener() {
-        return new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Get the command from the selected menu item
-                String menuItemName = e.getActionCommand();
-
-                // Call the method to record menu action
-                recordMenuAction(menuItemName);
-            }
-        };
-    }
 
     public void init() {
-        JFrame frame = new JFrame("Text editor (type & use buttons, Luke!)");
         JPanel content = new JPanel();
+        JPanel buttonPanel = new JPanel();
+
         frame.setContentPane(content);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         textPane = new JTextPane();
         content.add(textPane);
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton ctrlC = new JButton("Ctrl+C");
-        JButton ctrlX = new JButton("Ctrl+X");
-        JButton ctrlV = new JButton("Ctrl+V");
-        JButton ctrlZ = new JButton("Ctrl+Z");
-        Editor editor = this;
 
         JMenuBar menuBar = new JMenuBar();
-        JMenu snippetMenu = new JMenu("Snippet");
-        JMenuItem showSnippetMenuItem = new JMenuItem("Show Snippets");
+        JMenu fileMenu = new JMenu("File");
+        JMenu editMenu = new JMenu("Edit");
+        JMenu snippetMenu = new JMenu("Snippets");
+
+        JMenuItem openMenuItem = new JMenuItem("Open");
+        JMenuItem saveMenuItem = new JMenuItem("Save");
+
+        JMenuItem cut = new JMenuItem("Cut");
+        JMenuItem copy = new JMenuItem("Copy");
+        JMenuItem paste = new JMenuItem("Paste");
+        JMenuItem undo = new JMenuItem("Undo");
+
+        JMenuItem commentUncommentItem = new JMenuItem("Comment/Uncomment Block");
+        JMenuItem findReplaceItem = new JMenuItem("Find and Replace");
+
         JMenuItem createSnippetMenuItem = new JMenuItem("New Snippet");
+        JMenuItem showSnippetMenuItem = new JMenuItem("Show Snippets");
+
+        JButton setBookmarkButton = new JButton("Set Bookmark");
+        JButton removeBookmarkButton = new JButton("Remove Bookmark");
+
+        fileMenu.add(openMenuItem);
+        fileMenu.add(saveMenuItem);
+
+        editMenu.add(commentUncommentItem);
+        editMenu.add(findReplaceItem);
+        editMenu.add(cut);
+        editMenu.add(copy);
+        editMenu.add(paste);
+        editMenu.add(undo);
+
         snippetMenu.add(createSnippetMenuItem);
-
-        JMenu macroMenu = new JMenu("Macro");
-        menuBar.add(macroMenu);
-
-        JMenuItem startRecordingItem = new JMenuItem("Start Recording");
-        JMenuItem stopRecordingItem = new JMenuItem("Stop Recording");
-        JMenuItem playbackItem = new JMenuItem("Playback");
-        JMenuItem saveMacroItem = new JMenuItem("Save Macro");
-        JMenuItem loadMacroItem = new JMenuItem("Load Macro");
-
-        macroMenu.add(startRecordingItem);
-        macroMenu.add(stopRecordingItem);
-        macroMenu.add(playbackItem);
-
-        macroMenu.add(startRecordingItem);
-        macroMenu.add(stopRecordingItem);
-        macroMenu.add(playbackItem);
-        macroMenu.add(saveMacroItem);
-        macroMenu.add(loadMacroItem);
-
-        menuBar.add(macroMenu);
-        frame.setJMenuBar(menuBar);
-
-        startRecordingItem.addActionListener(e -> startRecording());
-        stopRecordingItem.addActionListener(e -> stopRecording());
-        playbackItem.addActionListener(e -> playback());
-        saveMacroItem.addActionListener(e -> saveMacro());
-        loadMacroItem.addActionListener(e -> loadMacro());
-        // Add a document listener to the text pane to capture text editing actions
-
-        ActionListener menuActionListener = getActionListener();
-        ctrlC.addActionListener(menuActionListener);
-        ctrlV.addActionListener(menuActionListener);
-        ctrlX.addActionListener(menuActionListener);
-        ctrlZ.addActionListener(menuActionListener);
-        showSnippetMenuItem.addActionListener(menuActionListener);
-        createSnippetMenuItem.addActionListener(menuActionListener);
-
-        textPane.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                recordTextEdit(e);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                // Handle text removal if needed
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // Handle attribute changes if needed
-            }
-        });
-
-        showSnippetMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new SnipetEditor().showSnippetDialog(frame, textPane.getStyledDocument());
-            }
-        });
-        createSnippetMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new SnipetEditor().createSnippetDialog(frame);
-            }
-        });
-
         snippetMenu.add(showSnippetMenuItem);
+
+        buttonPanel.add(setBookmarkButton);
+        buttonPanel.add(removeBookmarkButton);
+
+        menuBar.add(fileMenu);
+        menuBar.add(editMenu);
         menuBar.add(snippetMenu);
 
-        styledDocument = textPane.getStyledDocument();
+        lineNumbers = new LineNumberPanel(textPane, bookmarks);
+        JScrollPane scrollPane = new JScrollPane(textPane);
+        scrollPane.setRowHeaderView(lineNumbers);
+        frame.add(scrollPane);
+
+        Editor editor = this;
+
+        frame.setLayout(new BorderLayout());
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(buttonPanel, BorderLayout.SOUTH);
+
+        setBookmarkButton.addActionListener(e -> setBookmark());
+        removeBookmarkButton.addActionListener(e -> removeBookmark());
+
+        copy.addActionListener(e -> executeCommand(new CopyCommand(editor)));
+        cut.addActionListener(e -> executeCommand(new CutCommand(editor)));
+        paste.addActionListener(e -> executeCommand(new PasteCommand(editor)));
+        undo.addActionListener(e -> undo());
+
+        frame.setJMenuBar(menuBar);
+        frame.setSize(450, 200);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        openMenuItem.addActionListener(e -> openFile());
+        saveMenuItem.addActionListener(e -> saveFile());
+
+        commentUncommentItem.addActionListener(e -> commentUncommentBlock());
+        findReplaceItem.addActionListener(e -> {
+            String searchText = JOptionPane.showInputDialog("Enter text to find:");
+            String replaceText = JOptionPane.showInputDialog("Enter replacement text:");
+            findAndReplace(searchText, replaceText);
+        });
+
+        createSnippetMenuItem.addActionListener(e ->
+              new SnippetEditor().createSnippetDialog(frame)
+        );
+
         textPane.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
-
             }
 
             @Override
             public void keyTyped(KeyEvent e) {
-                highlightSyntax(0, textPane.getText().length());
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-
+                notifyObservers();
             }
         });
-
-        ctrlC.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                executeCommand(new CopyCommand(editor));
-            }
-        });
-        ctrlX.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                executeCommand(new CutCommand(editor));
-            }
-        });
-        ctrlV.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                executeCommand(new PasteCommand(editor));
-            }
-        });
-        ctrlZ.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                undo();
-            }
-        });
-        frame.setJMenuBar(menuBar);
-        buttons.add(ctrlC);
-        buttons.add(ctrlX);
-        buttons.add(ctrlV);
-        buttons.add(ctrlZ);
-        content.add(buttons);
-        frame.setSize(450, 200);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-    }
-
-    // Method to start recording
-    private void startRecording() {
-        recording = true;
-        recordedActions.clear();
-        recordedTextEdits.clear();
-    }
-
-    // Method to stop recording
-    private void stopRecording() {
-        recording = false;
-    }
-
-    // Method to playback recorded actions
-    private void playback() {
-        if (recordedActions.isEmpty() && recordedTextEdits.isEmpty()) {
-            return;
-        }
-
-        StyledDocument doc = textPane.getStyledDocument();
-        for (ActionEvent action : recordedActions) {
-            actionPerformed(action);
-        }
-
-        // Simulate recorded text edits
-        for (String textEdit : recordedTextEdits) {
-            try {
-                doc.insertString(doc.getLength(), textEdit, null);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    // Method to save recorded macro to a JSON file
-    private void saveMacro() {
-        try {
-            System.out.println(recordedActions);
-            System.out.println(recordedTextEdits);
-            List<String> serializedActions = new ArrayList<>();
-            for (ActionEvent action : recordedActions) {
-                serializedActions.add(action.getActionCommand());
-            }
-            for (String str : recordedTextEdits) {
-                serializedActions.add(str);
-            }
-            String json = String.join(",", serializedActions);
-            System.out.println(json);
-            new ObjectMapper().writeValue(new File("src/main/resources/macros.json"), json);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    // Method to load a recorded macro from a JSON file
-    private void loadMacro() {
-        try {
-            String json = new ObjectMapper().readValue(
-                  ResourceUtils.getFile("src/main/resources/macros.json"),
-                  String.class);
-            System.out.println(json);
-            String[] actions = json.split(",");
-            for (String action : actions) {
-                recordedActions.add(
-                      new ActionEvent(new JTextPane(), ActionEvent.ACTION_PERFORMED,
-                            action));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Method to record a text editing action
-    private void recordTextEdit(DocumentEvent e) {
-        if (recording) {
-            try {
-                Document doc = e.getDocument();
-                int offset = e.getOffset();
-                int length = e.getLength();
-                recordedTextEdits.add(doc.getText(offset, length));
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    private void actionPerformed(ActionEvent e) {
-        StyledDocument doc = textPane.getStyledDocument();
-        String command = e.getActionCommand();
-
-        if ("Insert Text".equals(command)) {
-            try {
-                doc.insertString(doc.getLength(), e.getActionCommand(), null);
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    // Method to record a menu action
-    private void recordMenuAction(String menuItemName) {
-        if (recording) {
-            recordedActions.add(
-                  new ActionEvent(new JMenuItem(menuItemName), ActionEvent.ACTION_PERFORMED,
-                        menuItemName));
-        }
     }
 
 
@@ -334,7 +168,117 @@ public class Editor {
         }
     }
 
-    private void highlightSyntax(int start, int length) {
-        new SyntaxHighlight().getAttributesForText(this, styledDocument, start, length);
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    private void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update();
+        }
+    }
+
+    private void setBookmark() {
+        int caretPosition = textPane.getCaretPosition();
+        Element root = textPane.getDocument().getDefaultRootElement();
+        int lineNumber = root.getElementIndex(caretPosition) + 1;
+
+        if (!bookmarks.contains(lineNumber)) {
+            bookmarks.add(lineNumber);
+            lineNumbers.updateLineNumbers();
+            JOptionPane.showMessageDialog(null, "Bookmark set at line " + lineNumber);
+        } else {
+            JOptionPane.showMessageDialog(null, "Bookmark already exists at line " + lineNumber);
+        }
+    }
+
+    // Method to remove a bookmark
+    private void removeBookmark() {
+        int caretPosition = textPane.getCaretPosition();
+        Element root = textPane.getDocument().getDefaultRootElement();
+        int lineNumber = root.getElementIndex(caretPosition) + 1;
+
+        if (bookmarks.contains(lineNumber)) {
+            bookmarks.remove(Integer.valueOf(lineNumber));
+            lineNumbers.updateLineNumbers();
+            JOptionPane.showMessageDialog(null, "Bookmark removed from line " + lineNumber);
+        } else {
+            JOptionPane.showMessageDialog(null, "No bookmark found at line " + lineNumber);
+        }
+    }
+
+    public void commentUncommentBlock() {
+        String selectedText = textPane.getSelectedText();
+        if (selectedText != null) {
+            String[] lines = selectedText.split("\n");
+            StringBuilder modifiedText = new StringBuilder();
+            boolean isCommented = false;
+
+            for (String line : lines) {
+                if (line.trim().startsWith("//")) {
+                    // Uncomment the line
+                    modifiedText.append(line.replaceFirst("//", "")).append("\n");
+                    isCommented = true;
+                } else {
+                    // Comment the line
+                    modifiedText.append("//").append(line).append("\n");
+                }
+            }
+
+            textPane.replaceSelection(modifiedText.toString().trim());
+            if (isCommented) {
+                textPane.setCaretPosition(textPane.getCaretPosition() - modifiedText.length());
+            }
+        }
+    }
+
+    // Macro 3: Find and Replace
+    public void findAndReplace(String searchText, String replaceText) {
+        String text = textPane.getText();
+        text = text.replace(searchText, replaceText);
+        textPane.setText(text);
+    }
+
+    private byte[] readBytesFromFile(File file) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(file);
+        byte[] bytes = new byte[(int) file.length()];
+        fileInputStream.read(bytes);
+        fileInputStream.close();
+        return bytes;
+    }
+
+    private void saveFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        int returnValue = fileChooser.showSaveDialog(null);
+
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            try {
+                String filePath = fileChooser.getSelectedFile().getPath();
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+                writer.write(textPane.getText());
+                writer.close();
+                JOptionPane.showMessageDialog(null, "Document saved successfully.");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error saving the document.");
+            }
+        }
+    }
+
+    private void openFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        int returnValue = fileChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+                String encoding = new InputStreamReader(
+                      new FileInputStream(selectedFile)).getEncoding();
+                byte[] fileBytes = readBytesFromFile(selectedFile);
+                new OpenFileCommand(this).execute(fileBytes, encoding);
+                notifyObservers();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 }

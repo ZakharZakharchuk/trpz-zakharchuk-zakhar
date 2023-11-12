@@ -1,7 +1,6 @@
 package com.example.texteditor.command;
 
 import com.example.texteditor.Editor;
-import javax.swing.text.BadLocationException;
 
 public abstract class Command {
 
