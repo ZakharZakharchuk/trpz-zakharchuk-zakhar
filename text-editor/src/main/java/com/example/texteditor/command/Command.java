@@ -4,14 +4,14 @@ import com.example.texteditor.Editor;
 
 public abstract class Command {
 
-    public Editor editor;
+    public final Editor editor;
     private String backup;
 
-    Command(Editor editor) {
+    protected Command(Editor editor) {
         this.editor = editor;
     }
 
-    void backup() {
+    protected void backup() {
         backup = editor.textPane.getText();
     }
 

@@ -1,11 +1,7 @@
 package com.example.texteditor.command;
 
 import com.example.texteditor.Editor;
-import java.awt.Color;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyledDocument;
 
 public class SyntaxHighlightCommand extends Command {
 
