@@ -13,7 +13,6 @@ public class ObserverManager {
 
     public void notifyObservers() {
         for (Observer observer : observers) {
-            System.out.println(observers);
             observer.update();
         }
     }
