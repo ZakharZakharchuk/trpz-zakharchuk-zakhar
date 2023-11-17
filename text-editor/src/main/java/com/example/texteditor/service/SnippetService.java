@@ -1,7 +1,7 @@
 package com.example.texteditor.service;
 
 import com.example.texteditor.data.Snippet;
-import com.example.texteditor.repositry.SnippetsRepository;
+import com.example.texteditor.repository.SnippetRepository;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,12 +17,11 @@ import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.StyledDocument;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-@Service
 @RequiredArgsConstructor
 public class SnippetService {
-    SnippetsRepository snippetsRepository;
+
+    private final SnippetRepository snippetRepository = new SnippetRepository();
 
     public void createSnippetDialog(JFrame parentFrame) {
         JDialog dialog = new JDialog(parentFrame, "Create New Snippet", true);
@@ -43,11 +42,12 @@ public class SnippetService {
                 String code = codeArea.getText();
 
                 if (!name.isEmpty() && !code.isEmpty()) {
-                    Snippet newSnippet = new Snippet();
-                    newSnippet.setName(name);
-                    newSnippet.setCode(code);
+                    Snippet newSnippet = Snippet.builder()
+                          .name(name)
+                          .code(code)
+                          .build();
 
-                    snippetsRepository.save(newSnippet);
+                    snippetRepository.save(newSnippet);
 
                     dialog.dispose();
                 }
@@ -65,7 +65,7 @@ public class SnippetService {
     }
 
     public void showSnippetDialog(JFrame parentFrame, StyledDocument doc) {
-        List<Snippet> snippets = snippetsRepository.findAll();
+        List<Snippet> snippets = snippetRepository.findAll();
         JDialog dialog = new JDialog(parentFrame, "Snippets", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 

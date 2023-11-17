@@ -1,7 +1,7 @@
 package com.example.texteditor.service;
 
 import com.example.texteditor.Editor;
-import javax.swing.*;
+import javax.swing.JOptionPane;
 import javax.swing.text.Element;
 
 public class BookmarkService {
