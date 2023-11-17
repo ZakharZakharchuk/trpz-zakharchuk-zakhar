@@ -1,13 +1,15 @@
 package com.example.texteditor;
 
+import com.example.texteditor.observer.ObserverManager;
 import com.example.texteditor.observer.SyntaxHighlight;
 
 public class TextEditor {
 
     public static void main(String[] args) {
-        Editor editor = new Editor();
+        ObserverManager observerManager = new ObserverManager();
+        Editor editor = new Editor(observerManager);
         editor.init();
-        new SyntaxHighlight(editor);
+        new SyntaxHighlight(editor,observerManager);
     }
 
 }
