@@ -7,14 +7,14 @@ import com.example.texteditor.template.ReservedWordSyntaxHighlight;
 import com.example.texteditor.template.StringSyntaxHighlight;
 import com.example.texteditor.template.SyntaxHighlightTemplate;
 
-public class SyntaxHighlight implements Observer {
+public class SyntaxHighlightListener implements Observer {
 
     private final SyntaxHighlightTemplate reservedWordHighlight;
     private final SyntaxHighlightTemplate stringHighlight;
     private final SyntaxHighlightTemplate numberHighlight;
     private final SyntaxHighlightTemplate annotationHighlight;
 
-    public SyntaxHighlight(Editor editor, ObserverManager observerManager) {
+    public SyntaxHighlightListener(Editor editor, ObserverManager observerManager) {
         reservedWordHighlight = new ReservedWordSyntaxHighlight(editor);
         stringHighlight = new StringSyntaxHighlight(editor);
         numberHighlight = new NumberSyntaxHighlight(editor);
