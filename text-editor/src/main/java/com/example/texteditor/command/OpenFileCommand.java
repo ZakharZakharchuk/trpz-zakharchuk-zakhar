@@ -15,16 +15,12 @@ public class OpenFileCommand {
     }
 
     public boolean execute(byte[] fileBytes, String encoding) {
-        EncodingStrategy encodingStrategy;
-        if (encoding.equals("UTF8")) {
-            encodingStrategy = new UTFStrategy();
-        } else if (encoding.equals("US-ASCII")) {
-            encodingStrategy = new ASCIIStrategy();
-        } else if (encoding.equals("ISO-8859-1")) {
-            encodingStrategy = new ISOStrategy();
-        } else {
-            throw new IllegalArgumentException("Unsupported encoding");
-        }
+        EncodingStrategy encodingStrategy = switch (encoding) {
+            case "UTF8" -> new UTFStrategy();
+            case "US-ASCII" -> new ASCIIStrategy();
+            case "ISO-8859-1" -> new ISOStrategy();
+            default -> throw new IllegalArgumentException("Unsupported encoding");
+        };
         String text = encodingStrategy.encode(fileBytes);
         editor.textPane.setText(text);
         return false;

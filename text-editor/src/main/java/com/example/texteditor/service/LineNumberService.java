@@ -1,4 +1,4 @@
-package com.example.texteditor;
+package com.example.texteditor.service;
 
 import java.awt.Color;
 import java.util.List;
@@ -10,12 +10,11 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Element;
 
-public class LineNumberPanel extends JPanel {
-
+public class LineNumberService extends JPanel {
     private final JTextPane textPane;
     private final List<Integer> bookmarks;
 
-    public LineNumberPanel(JTextPane textPane, List<Integer> bookmarks) {
+    public LineNumberService(JTextPane textPane, List<Integer> bookmarks) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         this.bookmarks = bookmarks;
         this.textPane = textPane;
@@ -41,7 +40,6 @@ public class LineNumberPanel extends JPanel {
 
     public void updateLineNumbers() {
         removeAll();
-
         Element root = textPane.getDocument().getDefaultRootElement();
         int lineCount = root.getElementCount();
         int digits = (int) Math.log10(lineCount) + 1;
@@ -54,7 +52,6 @@ public class LineNumberPanel extends JPanel {
             System.out.println(lineNumberLabel.getForeground());
             add(lineNumberLabel);
         }
-
         revalidate();
         repaint();
     }

@@ -14,13 +14,12 @@ public class SyntaxHighlight implements Observer {
     private final SyntaxHighlightTemplate numberHighlight;
     private final SyntaxHighlightTemplate annotationHighlight;
 
-    public SyntaxHighlight(Editor editor) {
+    public SyntaxHighlight(Editor editor, ObserverManager observerManager) {
         reservedWordHighlight = new ReservedWordSyntaxHighlight(editor);
         stringHighlight = new StringSyntaxHighlight(editor);
         numberHighlight = new NumberSyntaxHighlight(editor);
         annotationHighlight = new AnnotationSyntaxHighlight(editor);
-
-        editor.addObserver(this);
+        observerManager.addObserver(this);
     }
 
     @Override
