@@ -1,8 +1,11 @@
 package com.example.texteditor.service;
 
 import com.example.texteditor.Editor;
-import com.example.texteditor.command.OpenFileCommand;
 import com.example.texteditor.observer.ObserverManager;
+import com.example.texteditor.strategy.ASCIIStrategy;
+import com.example.texteditor.strategy.EncodingStrategy;
+import com.example.texteditor.strategy.ISOStrategy;
+import com.example.texteditor.strategy.UTFStrategy;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,11 +15,11 @@ import java.io.InputStreamReader;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-public class OpenFileService {
+public class FileService {
 
     private final Editor editor;
 
-    public OpenFileService(Editor editor) {
+    public FileService(Editor editor) {
         this.editor = editor;
     }
 
@@ -47,7 +50,14 @@ public class OpenFileService {
                 String encoding = new InputStreamReader(
                       new FileInputStream(selectedFile)).getEncoding();
                 byte[] fileBytes = readBytesFromFile(selectedFile);
-                new OpenFileCommand(editor).execute(fileBytes, encoding);
+                EncodingStrategy encodingStrategy = switch (encoding) {
+                    case "UTF8" -> new UTFStrategy();
+                    case "US-ASCII" -> new ASCIIStrategy();
+                    case "ISO-8859-1" -> new ISOStrategy();
+                    default -> throw new IllegalArgumentException("Unsupported encoding");
+                };
+                String text = encodingStrategy.encode(fileBytes);
+                editor.textPane.setText(text);
                 new ObserverManager().notifyObservers();
             } catch (IOException ex) {
                 ex.printStackTrace();

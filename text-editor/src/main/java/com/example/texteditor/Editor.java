@@ -6,12 +6,13 @@ import com.example.texteditor.command.CommentUncommentCommand;
 import com.example.texteditor.command.CopyCommand;
 import com.example.texteditor.command.CutCommand;
 import com.example.texteditor.command.FindAndReplaceCommand;
+import com.example.texteditor.command.OpenFileCommand;
 import com.example.texteditor.command.PasteCommand;
 import com.example.texteditor.command.RemoveBookmarkCommand;
+import com.example.texteditor.command.SaveFileCommand;
 import com.example.texteditor.command.SetBookmarkCommand;
 import com.example.texteditor.observer.ObserverManager;
 import com.example.texteditor.service.LineNumberService;
-import com.example.texteditor.service.OpenFileService;
 import com.example.texteditor.service.SnippetService;
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
@@ -38,7 +39,6 @@ public class Editor {
     private final JFrame frame = new JFrame("Text editor (type & use buttons, Luke!)");
     public final List<Integer> bookmarks = new ArrayList<>();
     public LineNumberService lineNumbers;
-    private final OpenFileService openFileService = new OpenFileService(this);
 
     public Editor(ObserverManager observerManager) {
         this.observerManager = observerManager;
@@ -119,8 +119,8 @@ public class Editor {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        openMenuItem.addActionListener(e -> openFileService.openFile());
-        saveMenuItem.addActionListener(e -> openFileService.saveFile());
+        openMenuItem.addActionListener(e -> executeCommand(new OpenFileCommand(this)));
+        saveMenuItem.addActionListener(e -> executeCommand(new SaveFileCommand(this)));
 
         commentUncommentItem.addActionListener(
               e -> executeCommand(new CommentUncommentCommand(this)));
