@@ -1,7 +1,7 @@
-package com.example.texteditor;
+package com.example.texteditor.service;
 
 import com.example.texteditor.data.Snippet;
-import com.example.texteditor.repositry.SnippetRepository;
+import com.example.texteditor.repositry.SnippetsRepository;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,8 +16,14 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.StyledDocument;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
-public class SnippetEditor {
+@Service
+@RequiredArgsConstructor
+public class SnippetService {
+    SnippetsRepository snippetsRepository;
+
     public void createSnippetDialog(JFrame parentFrame) {
         JDialog dialog = new JDialog(parentFrame, "Create New Snippet", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -40,9 +46,8 @@ public class SnippetEditor {
                     Snippet newSnippet = new Snippet();
                     newSnippet.setName(name);
                     newSnippet.setCode(code);
-                    SnippetRepository snippetRepository = new SnippetRepository();
 
-                    snippetRepository.saveSnippet(newSnippet);
+                    snippetsRepository.save(newSnippet);
 
                     dialog.dispose();
                 }
@@ -59,9 +64,8 @@ public class SnippetEditor {
         dialog.setVisible(true);
     }
 
-    public static void showSnippetDialog(JFrame parentFrame, StyledDocument doc) {
-        SnippetRepository snippetRepository = new SnippetRepository();
-        List<Snippet> snippets = snippetRepository.findAll();
+    public void showSnippetDialog(JFrame parentFrame, StyledDocument doc) {
+        List<Snippet> snippets = snippetsRepository.findAll();
         JDialog dialog = new JDialog(parentFrame, "Snippets", true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
@@ -77,7 +81,7 @@ public class SnippetEditor {
         dialog.setVisible(true);
     }
 
-    private static void addButtonForSnippet(JPanel panel, String snippetName, StyledDocument
+    private void addButtonForSnippet(JPanel panel, String snippetName, StyledDocument
           doc,
           String snippetCode) {
         JButton snippetButton = new JButton(snippetName);
