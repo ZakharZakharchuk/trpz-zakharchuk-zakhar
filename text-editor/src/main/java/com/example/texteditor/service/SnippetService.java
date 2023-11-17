@@ -3,8 +3,6 @@ package com.example.texteditor.service;
 import com.example.texteditor.data.Snippet;
 import com.example.texteditor.repository.SnippetRepository;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -35,22 +33,19 @@ public class SnippetService {
         JTextArea codeArea = new JTextArea(5, 20);
 
         JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String name = nameField.getText();
-                String code = codeArea.getText();
+        saveButton.addActionListener(e -> {
+            String name = nameField.getText();
+            String code = codeArea.getText();
 
-                if (!name.isEmpty() && !code.isEmpty()) {
-                    Snippet newSnippet = Snippet.builder()
-                          .name(name)
-                          .code(code)
-                          .build();
+            if (!name.isEmpty() && !code.isEmpty()) {
+                Snippet newSnippet = Snippet.builder()
+                      .name(name)
+                      .code(code)
+                      .build();
 
-                    snippetRepository.save(newSnippet);
+                snippetRepository.save(newSnippet);
 
-                    dialog.dispose();
-                }
+                dialog.dispose();
             }
         });
         dialog.add(nameLabel);
@@ -85,14 +80,11 @@ public class SnippetService {
           doc,
           String snippetCode) {
         JButton snippetButton = new JButton(snippetName);
-        snippetButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    doc.insertString(doc.getLength(), snippetCode, null);
-                } catch (BadLocationException ex) {
-                    ex.printStackTrace();
-                }
+        snippetButton.addActionListener(e -> {
+            try {
+                doc.insertString(doc.getLength(), snippetCode, null);
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
             }
         });
         panel.add(snippetButton);
