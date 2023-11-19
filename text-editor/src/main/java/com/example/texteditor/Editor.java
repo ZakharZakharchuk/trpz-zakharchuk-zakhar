@@ -12,11 +12,13 @@ import com.example.texteditor.command.RemoveBookmarkCommand;
 import com.example.texteditor.command.SaveFileCommand;
 import com.example.texteditor.command.SetBookmarkCommand;
 import com.example.texteditor.observer.ObserverManager;
+import com.example.texteditor.service.HelpService;
 import com.example.texteditor.service.LineNumberService;
 import com.example.texteditor.service.SnippetService;
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BoxLayout;
@@ -58,6 +60,7 @@ public class Editor {
         JMenu fileMenu = new JMenu("File");
         JMenu editMenu = new JMenu("Edit");
         JMenu snippetMenu = new JMenu("Snippets");
+        JMenu helpMenu = new JMenu("Help");
 
         JMenuItem openMenuItem = new JMenuItem("Open");
         JMenuItem saveMenuItem = new JMenuItem("Save");
@@ -72,6 +75,7 @@ public class Editor {
 
         JMenuItem createSnippetMenuItem = new JMenuItem("New Snippet");
         JMenuItem showSnippetMenuItem = new JMenuItem("Show Snippets");
+        JMenuItem helpMenuItem = new JMenuItem("Show help");
 
         JButton setBookmarkButton = new JButton("Set Bookmark");
         JButton removeBookmarkButton = new JButton("Remove Bookmark");
@@ -86,6 +90,8 @@ public class Editor {
         editMenu.add(paste);
         editMenu.add(undo);
 
+        helpMenu.add(helpMenuItem);
+
         snippetMenu.add(createSnippetMenuItem);
         snippetMenu.add(showSnippetMenuItem);
 
@@ -95,6 +101,15 @@ public class Editor {
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
         menuBar.add(snippetMenu);
+        menuBar.add(helpMenu);
+        helpMenuItem.addActionListener(e -> {
+            try {
+                new HelpService().openNewWindow("http://localhost:8080/help");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+                System.out.println("Error when call API");
+            }
+        });
 
         lineNumbers = new LineNumberService(textPane, bookmarks);
         JScrollPane scrollPane = new JScrollPane(textPane);
@@ -158,12 +173,10 @@ public class Editor {
         return new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
-                // Leave this method empty or add specific logic if needed
             }
 
             @Override
             public void keyTyped(KeyEvent e) {
-                // Leave this method empty or add specific logic if needed
             }
 
             @Override
