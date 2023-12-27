@@ -14,7 +14,7 @@ public class AnnotationSyntaxHighlight extends SyntaxHighlightTemplate{
 
     @Override
     public void highlightSyntax(Editor editor, String text) {
-        Pattern pattern = Pattern.compile("^@.*");
+        Pattern pattern = Pattern.compile("@.*$");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             SyntaxHighlightCommand command = new SyntaxHighlightCommand(editor, matcher.start(),
