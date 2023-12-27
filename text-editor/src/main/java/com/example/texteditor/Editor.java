@@ -14,6 +14,7 @@ import com.example.texteditor.command.SaveFileCommand;
 import com.example.texteditor.command.SetBookmarkCommand;
 import com.example.texteditor.command.ShowSnippetCommand;
 import com.example.texteditor.observer.ObserverManager;
+import com.example.texteditor.observer.SyntaxHighlightListener;
 import com.example.texteditor.repository.SnippetRepository;
 import com.example.texteditor.service.HelpService;
 import com.example.texteditor.service.LineNumberService;
@@ -33,14 +34,14 @@ public class Editor {
 
     public JTextPane textPane;
     public String clipboard;
-    private final ObserverManager observerManager;
+    private final ObserverManager observerManager=new ObserverManager();
     private final CommandHistory history = new CommandHistory();
     private final JFrame frame = new JFrame("Text editor (type & use buttons, Luke!)");
     public final List<Integer> bookmarks = new ArrayList<>();
     public LineNumberService lineNumbers;
 
-    public Editor(ObserverManager observerManager) {
-        this.observerManager = observerManager;
+    public Editor() {
+        new SyntaxHighlightListener(this, observerManager);
         initAutoCompleteList();
         init();
     }
@@ -177,7 +178,6 @@ public class Editor {
             }
         });
 
-        // Add the combo box to the content pane
         frame.getContentPane().add(autoCompleteComboBox, BorderLayout.NORTH);
     }
 
@@ -255,6 +255,9 @@ public class Editor {
         textPane.select(start, caretPosition);
         textPane.replaceSelection(suggestion);
         autoCompleteComboBox.setPopupVisible(false);
+    }
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
 }

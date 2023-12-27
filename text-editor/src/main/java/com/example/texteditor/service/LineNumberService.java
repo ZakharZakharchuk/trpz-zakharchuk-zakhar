@@ -49,7 +49,6 @@ public class LineNumberService extends JPanel {
             if (bookmarks.contains(i)) {
                 lineNumberLabel.setForeground(Color.BLUE);
             }
-            System.out.println(lineNumberLabel.getForeground());
             add(lineNumberLabel);
         }
         revalidate();

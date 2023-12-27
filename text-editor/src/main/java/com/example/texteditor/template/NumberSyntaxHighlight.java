@@ -14,7 +14,7 @@ public class NumberSyntaxHighlight extends SyntaxHighlightTemplate{
 
     @Override
     public void highlightSyntax(Editor editor, String text) {
-        Pattern pattern = Pattern.compile("\\d+(\\.\\d+)?");
+        Pattern pattern = Pattern.compile("(?<![a-zA-Z])\\d+(\\.\\d+)?(?![a-zA-Z])");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             SyntaxHighlightCommand command = new SyntaxHighlightCommand(editor, matcher.start(),

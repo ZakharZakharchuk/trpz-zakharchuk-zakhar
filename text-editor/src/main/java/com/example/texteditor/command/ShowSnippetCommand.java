@@ -37,8 +37,6 @@ public class ShowSnippetCommand extends Command {
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
 
-
-
         return true;
     }
 

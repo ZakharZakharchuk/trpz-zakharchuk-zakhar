@@ -11,23 +11,22 @@ import java.util.regex.Pattern;
 
 public class ReservedWordSyntaxHighlight extends SyntaxHighlightTemplate {
 
+    private static final Set<String> javaReservedWords = new HashSet<>(Arrays.asList(
+          "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class",
+          "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
+          "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int",
+          "interface", "long", "native", "new", "package", "private", "protected", "public",
+          "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this",
+          "throw", "throws", "transient", "try", "void", "volatile", "while", "true", "false",
+          "null"));
+
     public ReservedWordSyntaxHighlight(Editor editor) {
         super(editor);
     }
 
     @Override
     public void highlightSyntax(Editor editor, String text) {
-        Set<String> javaReservedWords = new HashSet<>(Arrays.asList(
-              "abstract", "assert", "void", "break", "byte", "case", "catch", "char",
-              "class", "const", "continue", "default", "do", "double", "else", "enum",
-              "extends", "final", "finally", "float", "for", "goto", "if", "implements",
-              "import", "instanceof", "int", "interface", "long", "native", "new", "package",
-              "public", "protected", "private", "return", "short", "static", "strictfp",
-              "super",
-              "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
-              "volatile", "while"
-        ));
-        for (String keyword : javaReservedWords) {
+        javaReservedWords.forEach(keyword -> {
             Pattern pattern = Pattern.compile("\\b" + keyword + "\\b");
             Matcher matcher = pattern.matcher(text);
             while (matcher.find()) {
@@ -37,6 +36,6 @@ public class ReservedWordSyntaxHighlight extends SyntaxHighlightTemplate {
                       SyntaxHighlightAttributesFlyweight.getKeywordAttributes());
                 command.execute();
             }
-        }
+        });
     }
 }

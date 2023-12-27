@@ -1,38 +1,47 @@
 package com.example.texteditor.repository;
 
 import com.example.texteditor.data.Snippet;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.bson.Document;
 
 public class SnippetRepository {
 
+    private static final String COLLECTION_NAME = "snippets";
+    private static final String DATABASE_NAME = "textEditor";
+    private static final String MONGO_URL = "mongodb://localhost:27017";
+
+
     private final MongoCollection<Document> snippetCollection;
+    private MongoClient mongoClient;
 
     public SnippetRepository() {
-        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
-        MongoDatabase database = mongoClient.getDatabase("textEditor");
-        this.snippetCollection = database.getCollection("snippets");
+        initializeMongoClient();
+        this.snippetCollection = initializeSnippetCollection();
+    }
+
+    private void initializeMongoClient() {
+        mongoClient = MongoClients.create(MONGO_URL);
+    }
+
+    private MongoCollection<Document> initializeSnippetCollection() {
+        MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
+        return database.getCollection(COLLECTION_NAME);
     }
 
     public List<Snippet> findAll() {
         List<Snippet> snippets = new ArrayList<>();
-        FindIterable<Document> documents = snippetCollection.find();
-
-        try (MongoCursor<Document> cursor = documents.iterator()) {
+        try (MongoCursor<Document> cursor = snippetCollection.find().iterator()) {
             while (cursor.hasNext()) {
                 Document document = cursor.next();
                 snippets.add(documentToSnippet(document));
             }
         }
-
         return snippets;
     }
 

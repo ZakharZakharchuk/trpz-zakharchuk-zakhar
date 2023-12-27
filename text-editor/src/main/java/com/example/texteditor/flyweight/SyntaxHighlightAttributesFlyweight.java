@@ -9,20 +9,17 @@ public class SyntaxHighlightAttributesFlyweight {
     private static final SimpleAttributeSet keywordAttributes = new SimpleAttributeSet();
     private static final SimpleAttributeSet stringAttributes = new SimpleAttributeSet();
     private static final SimpleAttributeSet numberAttributes = new SimpleAttributeSet();
-    private static final SimpleAttributeSet classAttributes = new SimpleAttributeSet();
     private static final SimpleAttributeSet annotationAttributes = new SimpleAttributeSet();
 
     static {
         StyleConstants.setForeground(keywordAttributes, Color.BLACK);
         StyleConstants.setBold(keywordAttributes, true);
 
-        StyleConstants.setForeground(stringAttributes, Color.BLUE);
+        StyleConstants.setForeground(stringAttributes, Color.GREEN);
 
-        StyleConstants.setForeground(numberAttributes, Color.RED);
+        StyleConstants.setForeground(numberAttributes, Color.CYAN);
 
-        StyleConstants.setForeground(classAttributes, Color.GREEN);
-
-        StyleConstants.setForeground(annotationAttributes, Color.YELLOW);
+        StyleConstants.setForeground(annotationAttributes, Color.ORANGE);
     }
 
     public static SimpleAttributeSet getKeywordAttributes() {
@@ -35,10 +32,6 @@ public class SyntaxHighlightAttributesFlyweight {
 
     public static SimpleAttributeSet getNumberAttributes() {
         return numberAttributes;
-    }
-
-    public static SimpleAttributeSet getClassAttributes() {
-        return classAttributes;
     }
 
     public static SimpleAttributeSet getAnnotationAttributes() {
