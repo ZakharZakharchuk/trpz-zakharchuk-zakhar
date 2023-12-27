@@ -1,7 +1,6 @@
 package com.example.texteditor.command;
 
 import com.example.texteditor.Editor;
-import com.example.texteditor.service.MacroService;
 
 public class FindAndReplaceCommand extends Command {
 
@@ -17,7 +16,9 @@ public class FindAndReplaceCommand extends Command {
     @Override
     public boolean execute() {
         backup();
-        new MacroService().findAndReplace(editor.textPane, searchText, replaceText);
+        String text = editor.textPane.getText();
+        text = text.replace(searchText, replaceText);
+        editor.textPane.setText(text);
         return true;
     }
 }

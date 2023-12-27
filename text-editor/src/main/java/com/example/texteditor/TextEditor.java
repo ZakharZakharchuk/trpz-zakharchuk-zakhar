@@ -8,7 +8,6 @@ public class TextEditor {
     public static void main(String[] args) {
         ObserverManager observerManager = new ObserverManager();
         Editor editor = new Editor(observerManager);
-        editor.init();
         new SyntaxHighlightListener(editor,observerManager);
     }
 

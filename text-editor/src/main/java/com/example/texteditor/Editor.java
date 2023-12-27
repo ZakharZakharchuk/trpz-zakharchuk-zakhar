@@ -4,6 +4,7 @@ import com.example.texteditor.command.Command;
 import com.example.texteditor.command.CommandHistory;
 import com.example.texteditor.command.CommentUncommentCommand;
 import com.example.texteditor.command.CopyCommand;
+import com.example.texteditor.command.CreateSnippetCommand;
 import com.example.texteditor.command.CutCommand;
 import com.example.texteditor.command.FindAndReplaceCommand;
 import com.example.texteditor.command.OpenFileCommand;
@@ -11,28 +12,24 @@ import com.example.texteditor.command.PasteCommand;
 import com.example.texteditor.command.RemoveBookmarkCommand;
 import com.example.texteditor.command.SaveFileCommand;
 import com.example.texteditor.command.SetBookmarkCommand;
+import com.example.texteditor.command.ShowSnippetCommand;
 import com.example.texteditor.observer.ObserverManager;
+import com.example.texteditor.repository.SnippetRepository;
 import com.example.texteditor.service.HelpService;
 import com.example.texteditor.service.LineNumberService;
-import com.example.texteditor.service.SnippetService;
-import java.awt.BorderLayout;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
 
 public class Editor {
+
+    private JComboBox<String> autoCompleteComboBox;
+    private List<String> autoCompleteList;
 
     public JTextPane textPane;
     public String clipboard;
@@ -44,11 +41,22 @@ public class Editor {
 
     public Editor(ObserverManager observerManager) {
         this.observerManager = observerManager;
+        initAutoCompleteList();
+        init();
+    }
+
+    private void initAutoCompleteList() {
+        // Initialize your list of autocomplete suggestions
+        autoCompleteList = new ArrayList<>();
+        autoCompleteList.add("class");
+        autoCompleteList.add("public");
+        autoCompleteList.add("void");
+        autoCompleteList.add("new");
+
     }
 
     public void init() {
         JPanel content = new JPanel();
-        JPanel buttonPanel = new JPanel();
 
         frame.setContentPane(content);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -61,6 +69,7 @@ public class Editor {
         JMenu editMenu = new JMenu("Edit");
         JMenu snippetMenu = new JMenu("Snippets");
         JMenu helpMenu = new JMenu("Help");
+        JMenu bookmarkMenu = new JMenu("Bookmarks");
 
         JMenuItem openMenuItem = new JMenuItem("Open");
         JMenuItem saveMenuItem = new JMenuItem("Save");
@@ -77,8 +86,8 @@ public class Editor {
         JMenuItem showSnippetMenuItem = new JMenuItem("Show Snippets");
         JMenuItem helpMenuItem = new JMenuItem("Show help");
 
-        JButton setBookmarkButton = new JButton("Set Bookmark");
-        JButton removeBookmarkButton = new JButton("Remove Bookmark");
+        JMenuItem setBookmarkMenuItem = new JMenuItem("Set Bookmark");
+        JMenuItem removeBookmarkMenuItem = new JMenuItem("Remove Bookmark");
 
         fileMenu.add(openMenuItem);
         fileMenu.add(saveMenuItem);
@@ -95,13 +104,14 @@ public class Editor {
         snippetMenu.add(createSnippetMenuItem);
         snippetMenu.add(showSnippetMenuItem);
 
-        buttonPanel.add(setBookmarkButton);
-        buttonPanel.add(removeBookmarkButton);
+        bookmarkMenu.add(setBookmarkMenuItem);
+        bookmarkMenu.add(removeBookmarkMenuItem);
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
         menuBar.add(snippetMenu);
         menuBar.add(helpMenu);
+        menuBar.add(bookmarkMenu);
         helpMenuItem.addActionListener(e -> {
             try {
                 new HelpService().openNewWindow("http://localhost:8080/help");
@@ -118,10 +128,9 @@ public class Editor {
 
         frame.setLayout(new BorderLayout());
         frame.add(scrollPane, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
 
-        setBookmarkButton.addActionListener(e -> executeCommand(new SetBookmarkCommand(this)));
-        removeBookmarkButton.addActionListener(
+        setBookmarkMenuItem.addActionListener(e -> executeCommand(new SetBookmarkCommand(this)));
+        removeBookmarkMenuItem.addActionListener(
               e -> executeCommand(new RemoveBookmarkCommand(this)));
 
         copy.addActionListener(e -> executeCommand(new CopyCommand(this)));
@@ -146,12 +155,30 @@ public class Editor {
         });
 
         createSnippetMenuItem.addActionListener(e ->
-              new SnippetService().createSnippetDialog(frame)
+              executeCommand(new CreateSnippetCommand(this, new SnippetRepository()))
         );
         showSnippetMenuItem.addActionListener(e ->
-              new SnippetService().showSnippetDialog(frame, textPane.getStyledDocument()));
+              executeCommand(new ShowSnippetCommand(this, new SnippetRepository())));
 
+        initAutoCompleteComboBox();
         textPane.addKeyListener(createKeyListener());
+        frame.getContentPane().add(autoCompleteComboBox, BorderLayout.SOUTH);
+    }
+
+    private void initAutoCompleteComboBox() {
+        autoCompleteComboBox = new JComboBox<>(autoCompleteList.toArray(new String[0]));
+        autoCompleteComboBox.setEditable(true);
+        autoCompleteComboBox.setSelectedItem(null);
+
+
+        autoCompleteComboBox.addActionListener(e -> {
+            if (autoCompleteComboBox.getSelectedItem() != null) {
+                insertAutoCompleteText((String) autoCompleteComboBox.getSelectedItem());
+            }
+        });
+
+        // Add the combo box to the content pane
+        frame.getContentPane().add(autoCompleteComboBox, BorderLayout.NORTH);
     }
 
     private void executeCommand(Command command) {
@@ -173,6 +200,10 @@ public class Editor {
         return new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
+                char typedChar = e.getKeyChar();
+                if (Character.isLetterOrDigit(typedChar)) {
+                    showAutoCompleteDropdown();
+                }
             }
 
             @Override
@@ -185,4 +216,45 @@ public class Editor {
             }
         };
     }
+
+    private void showAutoCompleteDropdown() {
+        List<String> filteredList = new ArrayList<>();
+        for (String suggestion : autoCompleteList) {
+            if (suggestion.contains(getCurrentWord())) {
+                filteredList.add(suggestion);
+            }
+        }
+        autoCompleteComboBox.removeAll();
+        if (filteredList.isEmpty()) {
+            autoCompleteComboBox.setPopupVisible(false);
+        } else {
+            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(
+                  filteredList.toArray(new String[0]));
+            autoCompleteComboBox.setModel(model);
+
+            autoCompleteComboBox.setPopupVisible(true);
+        }
+    }
+
+    private String getCurrentWord() {
+        String content = textPane.getText();
+        int caretPosition = textPane.getCaretPosition();
+        int start = caretPosition - 1;
+
+        while (start >= 0 && Character.isLetterOrDigit(content.charAt(start))) {
+            start--;
+        }
+
+        return content.substring(start + 1, caretPosition);
+    }
+
+    private void insertAutoCompleteText(String suggestion) {
+        String currentWord = getCurrentWord();
+        int caretPosition = textPane.getCaretPosition();
+        int start = caretPosition - currentWord.length();
+        textPane.select(start, caretPosition);
+        textPane.replaceSelection(suggestion);
+        autoCompleteComboBox.setPopupVisible(false);
+    }
+
 }
