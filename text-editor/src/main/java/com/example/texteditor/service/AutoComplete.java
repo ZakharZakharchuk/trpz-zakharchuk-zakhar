@@ -1,78 +1,56 @@
 package com.example.texteditor.service;
 
-import com.example.texteditor.observer.ObserverManager;
-import java.awt.Container;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import com.example.texteditor.Editor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
-import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
 public class AutoComplete {
 
-    private final JComboBox<String> autoCompleteComboBox;
-    private final List<String> autoCompleteList;
+    private JComboBox<String> autoCompleteComboBox;
+    private List<String> autoCompleteList;
     private final JTextPane textPane;
-    private final ObserverManager observerManager;
 
-    public AutoComplete(JTextPane textPane, ObserverManager observerManager) {
-        this.textPane = textPane;
-        this.observerManager = observerManager;
-
-        this.autoCompleteList = new ArrayList<>();
+    public AutoComplete(Editor editor) {
+        this.textPane = editor.textPane;
         initAutoCompleteList();
-        this.autoCompleteComboBox = createAutoCompleteComboBox();
-        textPane.addKeyListener(createKeyListener());
-        addAutoCompleteComboBoxToFrame();
+        initAutoCompleteComboBox();
+
     }
 
     private void initAutoCompleteList() {
-        // Initialize your list of autocomplete suggestions
-        autoCompleteList.add("class");
-        autoCompleteList.add("public");
-        autoCompleteList.add("void");
-        autoCompleteList.add("new");
+        autoCompleteList = Arrays.asList(
+              "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class",
+              "const", "continue", "default", "do", "double", "else", "enum", "extends", "final",
+              "finally", "float", "for", "if", "implements", "import", "instanceof", "int",
+              "interface", "long", "native", "new", "package", "private", "protected", "public",
+              "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this",
+              "throw", "throws", "transient", "try", "void", "volatile", "while", "true", "false",
+              "null");
+
     }
 
-    private JComboBox<String> createAutoCompleteComboBox() {
-        JComboBox<String> comboBox = new JComboBox<>(autoCompleteList.toArray(new String[0]));
-        comboBox.setEditable(true);
-        comboBox.setSelectedItem(null);
+    public JComboBox<String> getAutoCompleteComboBox() {
+        return autoCompleteComboBox;
+    }
 
-        comboBox.addActionListener(e -> {
-            if (comboBox.getSelectedItem() != null) {
-                insertAutoCompleteText((String) comboBox.getSelectedItem());
+    public void initAutoCompleteComboBox() {
+        autoCompleteComboBox = new JComboBox<>(autoCompleteList.toArray(new String[0]));
+        autoCompleteComboBox.setEditable(true);
+        autoCompleteComboBox.setSelectedItem(null);
+
+        autoCompleteComboBox.addActionListener(e -> {
+            if (autoCompleteComboBox.getSelectedItem() != null) {
+                insertAutoCompleteText((String) autoCompleteComboBox.getSelectedItem());
             }
         });
-
-        return comboBox;
     }
 
-    private KeyListener createKeyListener() {
-        return new KeyListener() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                char typedChar = e.getKeyChar();
-                if (Character.isLetterOrDigit(typedChar)) {
-                    showAutoCompleteDropdown();
-                }
-            }
 
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                observerManager.notifyObservers();
-            }
-        };
-    }
-
-    private void showAutoCompleteDropdown() {
+    public void showAutoCompleteDropdown() {
         List<String> filteredList = new ArrayList<>();
         for (String suggestion : autoCompleteList) {
             if (suggestion.contains(getCurrentWord())) {
@@ -83,7 +61,8 @@ public class AutoComplete {
         if (filteredList.isEmpty()) {
             autoCompleteComboBox.setPopupVisible(false);
         } else {
-            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(filteredList.toArray(new String[0]));
+            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(
+                  filteredList.toArray(new String[0]));
             autoCompleteComboBox.setModel(model);
             autoCompleteComboBox.setPopupVisible(true);
         }
@@ -98,9 +77,7 @@ public class AutoComplete {
             start--;
         }
 
-        int end = caretPosition;
-
-        return content.substring(start + 1, end);
+        return content.substring(start + 1, caretPosition);
     }
 
     private void insertAutoCompleteText(String suggestion) {
@@ -110,14 +87,6 @@ public class AutoComplete {
         textPane.select(start, caretPosition);
         textPane.replaceSelection(suggestion);
         autoCompleteComboBox.setPopupVisible(false);
-    }
-
-    private void addAutoCompleteComboBoxToFrame() {
-        Container container = textPane.getParent();
-        if (container instanceof JScrollPane) {
-            JScrollPane scrollPane = (JScrollPane) container;
-            scrollPane.setColumnHeaderView(autoCompleteComboBox);
-        }
     }
 }
 

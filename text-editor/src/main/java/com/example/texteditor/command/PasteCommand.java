@@ -1,6 +1,7 @@
 package com.example.texteditor.command;
 
 import com.example.texteditor.Editor;
+import com.example.texteditor.ExceptionHandler;
 import javax.swing.text.BadLocationException;
 
 public class PasteCommand extends Command {
@@ -21,7 +22,7 @@ public class PasteCommand extends Command {
             editor.textPane.getStyledDocument()
                   .insertString(caretPosition, editor.clipboard, null);
         } catch (BadLocationException e) {
-            System.out.println("Error on paste");
+            new ExceptionHandler().showError("Cannot paste text, please try again");
         }
         return true;
     }

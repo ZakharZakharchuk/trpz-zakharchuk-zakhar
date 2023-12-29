@@ -1,6 +1,7 @@
 package com.example.texteditor.service;
 
 import com.example.texteditor.Editor;
+import com.example.texteditor.ExceptionHandler;
 import com.example.texteditor.observer.ObserverManager;
 import com.example.texteditor.strategy.ASCIIStrategy;
 import com.example.texteditor.strategy.EncodingStrategy;
@@ -54,13 +55,13 @@ public class FileService {
                     case "UTF8" -> new UTFStrategy();
                     case "US-ASCII" -> new ASCIIStrategy();
                     case "ISO-8859-1" -> new ISOStrategy();
-                    default -> throw new IllegalArgumentException("Unsupported encoding");
+                    default -> throw new IOException("Unsupported encoding");
                 };
                 String text = encodingStrategy.encode(fileBytes);
                 editor.textPane.setText(text);
                 new ObserverManager().notifyObservers();
             } catch (IOException ex) {
-                ex.printStackTrace();
+                new ExceptionHandler().showError("Error opening the document.");
             }
         }
     }

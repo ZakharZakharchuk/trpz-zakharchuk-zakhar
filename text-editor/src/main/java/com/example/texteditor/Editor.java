@@ -16,45 +16,41 @@ import com.example.texteditor.command.ShowSnippetCommand;
 import com.example.texteditor.observer.ObserverManager;
 import com.example.texteditor.observer.SyntaxHighlightListener;
 import com.example.texteditor.repository.SnippetRepository;
-import com.example.texteditor.service.HelpService;
+import com.example.texteditor.service.AutoComplete;
+import com.example.texteditor.service.InfoService;
 import com.example.texteditor.service.LineNumberService;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 
 public class Editor {
 
-    private JComboBox<String> autoCompleteComboBox;
-    private List<String> autoCompleteList;
+    private AutoComplete autoCompleteService;
 
     public JTextPane textPane;
     public String clipboard;
-    private final ObserverManager observerManager=new ObserverManager();
+    public final ObserverManager observerManager = new ObserverManager();
     private final CommandHistory history = new CommandHistory();
-    private final JFrame frame = new JFrame("Text editor (type & use buttons, Luke!)");
+    private final JFrame frame = new JFrame("Text editor");
     public final List<Integer> bookmarks = new ArrayList<>();
     public LineNumberService lineNumbers;
 
     public Editor() {
         new SyntaxHighlightListener(this, observerManager);
-        initAutoCompleteList();
         init();
     }
 
-    private void initAutoCompleteList() {
-        // Initialize your list of autocomplete suggestions
-        autoCompleteList = new ArrayList<>();
-        autoCompleteList.add("class");
-        autoCompleteList.add("public");
-        autoCompleteList.add("void");
-        autoCompleteList.add("new");
-
-    }
 
     public void init() {
         JPanel content = new JPanel();
@@ -69,7 +65,7 @@ public class Editor {
         JMenu fileMenu = new JMenu("File");
         JMenu editMenu = new JMenu("Edit");
         JMenu snippetMenu = new JMenu("Snippets");
-        JMenu helpMenu = new JMenu("Help");
+        JMenu helpMenu = new JMenu("Info");
         JMenu bookmarkMenu = new JMenu("Bookmarks");
 
         JMenuItem openMenuItem = new JMenuItem("Open");
@@ -85,7 +81,7 @@ public class Editor {
 
         JMenuItem createSnippetMenuItem = new JMenuItem("New Snippet");
         JMenuItem showSnippetMenuItem = new JMenuItem("Show Snippets");
-        JMenuItem helpMenuItem = new JMenuItem("Show help");
+        JMenuItem helpMenuItem = new JMenuItem("Show info");
 
         JMenuItem setBookmarkMenuItem = new JMenuItem("Set Bookmark");
         JMenuItem removeBookmarkMenuItem = new JMenuItem("Remove Bookmark");
@@ -114,12 +110,7 @@ public class Editor {
         menuBar.add(helpMenu);
         menuBar.add(bookmarkMenu);
         helpMenuItem.addActionListener(e -> {
-            try {
-                new HelpService().openNewWindow("http://localhost:8080/help");
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-                System.out.println("Error when call API");
-            }
+            new InfoService().openNewWindow("http://localhost:8080/info");
         });
 
         lineNumbers = new LineNumberService(textPane, bookmarks);
@@ -155,30 +146,41 @@ public class Editor {
             executeCommand(new FindAndReplaceCommand(this, searchText, replaceText));
         });
 
+        SnippetRepository snippetRepository = new SnippetRepository();
         createSnippetMenuItem.addActionListener(e ->
-              executeCommand(new CreateSnippetCommand(this, new SnippetRepository()))
+              executeCommand(new CreateSnippetCommand(this, snippetRepository))
         );
         showSnippetMenuItem.addActionListener(e ->
-              executeCommand(new ShowSnippetCommand(this, new SnippetRepository())));
+              executeCommand(new ShowSnippetCommand(this, snippetRepository)));
 
-        initAutoCompleteComboBox();
+        autoCompleteService = new AutoComplete(this);
+        autoCompleteService.initAutoCompleteComboBox();
         textPane.addKeyListener(createKeyListener());
-        frame.getContentPane().add(autoCompleteComboBox, BorderLayout.SOUTH);
+        autoCompleteService.initAutoCompleteComboBox();
+        frame.getContentPane()
+              .add(autoCompleteService.getAutoCompleteComboBox(), BorderLayout.SOUTH);
     }
 
-    private void initAutoCompleteComboBox() {
-        autoCompleteComboBox = new JComboBox<>(autoCompleteList.toArray(new String[0]));
-        autoCompleteComboBox.setEditable(true);
-        autoCompleteComboBox.setSelectedItem(null);
-
-
-        autoCompleteComboBox.addActionListener(e -> {
-            if (autoCompleteComboBox.getSelectedItem() != null) {
-                insertAutoCompleteText((String) autoCompleteComboBox.getSelectedItem());
+    private KeyListener createKeyListener() {
+        return new KeyListener() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                observerManager.notifyObservers();
+                char typedChar = e.getKeyChar();
+                if (Character.isLetterOrDigit(typedChar)) {
+                    autoCompleteService.showAutoCompleteDropdown();
+                }
             }
-        });
 
-        frame.getContentPane().add(autoCompleteComboBox, BorderLayout.NORTH);
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        };
     }
 
     private void executeCommand(Command command) {
@@ -194,70 +196,6 @@ public class Editor {
                 command.undo();
             }
         }
-    }
-
-    private KeyListener createKeyListener() {
-        return new KeyListener() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                char typedChar = e.getKeyChar();
-                if (Character.isLetterOrDigit(typedChar)) {
-                    showAutoCompleteDropdown();
-                }
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                observerManager.notifyObservers();
-            }
-        };
-    }
-
-    private void showAutoCompleteDropdown() {
-        List<String> filteredList = new ArrayList<>();
-        for (String suggestion : autoCompleteList) {
-            if (suggestion.contains(getCurrentWord())) {
-                filteredList.add(suggestion);
-            }
-        }
-        autoCompleteComboBox.removeAll();
-        if (filteredList.isEmpty()) {
-            autoCompleteComboBox.setPopupVisible(false);
-        } else {
-            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(
-                  filteredList.toArray(new String[0]));
-            autoCompleteComboBox.setModel(model);
-
-            autoCompleteComboBox.setPopupVisible(true);
-        }
-    }
-
-    private String getCurrentWord() {
-        String content = textPane.getText();
-        int caretPosition = textPane.getCaretPosition();
-        int start = caretPosition - 1;
-
-        while (start >= 0 && Character.isLetterOrDigit(content.charAt(start))) {
-            start--;
-        }
-
-        return content.substring(start + 1, caretPosition);
-    }
-
-    private void insertAutoCompleteText(String suggestion) {
-        String currentWord = getCurrentWord();
-        int caretPosition = textPane.getCaretPosition();
-        int start = caretPosition - currentWord.length();
-        textPane.select(start, caretPosition);
-        textPane.replaceSelection(suggestion);
-        autoCompleteComboBox.setPopupVisible(false);
-    }
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
 }

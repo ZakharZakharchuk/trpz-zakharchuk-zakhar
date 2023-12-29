@@ -1,6 +1,7 @@
 package com.example.texteditor.command;
 
 import com.example.texteditor.Editor;
+import com.example.texteditor.ExceptionHandler;
 import com.example.texteditor.data.Snippet;
 import com.example.texteditor.repository.SnippetRepository;
 import java.awt.GridLayout;
@@ -51,7 +52,7 @@ public class ShowSnippetCommand extends Command {
                       null
                 );
             } catch (BadLocationException ex) {
-                ex.printStackTrace();
+                new ExceptionHandler().showError("Cannot insert snippet, please try again");
             }
         });
         panel.add(snippetButton);

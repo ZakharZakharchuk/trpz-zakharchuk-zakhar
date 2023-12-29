@@ -15,9 +15,9 @@ public class SyntaxHighlightAttributesFlyweight {
         StyleConstants.setForeground(keywordAttributes, Color.BLACK);
         StyleConstants.setBold(keywordAttributes, true);
 
-        StyleConstants.setForeground(stringAttributes, Color.GREEN);
+        StyleConstants.setForeground(stringAttributes, Color.MAGENTA);
 
-        StyleConstants.setForeground(numberAttributes, Color.CYAN);
+        StyleConstants.setForeground(numberAttributes, Color.PINK);
 
         StyleConstants.setForeground(annotationAttributes, Color.ORANGE);
     }

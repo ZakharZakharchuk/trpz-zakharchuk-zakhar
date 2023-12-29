@@ -1,6 +1,7 @@
 package com.example.texteditor.template;
 
 import com.example.texteditor.Editor;
+import com.example.texteditor.ExceptionHandler;
 import javax.swing.text.BadLocationException;
 
 public abstract class SyntaxHighlightTemplate {
@@ -17,7 +18,7 @@ public abstract class SyntaxHighlightTemplate {
                   .getText(0, editor.textPane.getStyledDocument().getLength());
             highlightSyntax(editor, text);
         } catch (BadLocationException e) {
-            e.printStackTrace();
+            new ExceptionHandler().showError("Something gone wrong, please try again");
         }
     }
 
