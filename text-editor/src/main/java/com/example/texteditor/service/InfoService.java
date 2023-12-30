@@ -9,10 +9,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class InfoService {
+    private static final String API_URL = "http://localhost:8080/info";
 
-    public void openNewWindow(String apiUrl) {
+    public void openNewWindow() {
         try {
-            String content = makeRestCall(apiUrl);
+            String content = makeRestCall(API_URL);
 
             SwingUtilities.invokeLater(() -> createAndShowWindow(content));
         } catch (IOException e) {

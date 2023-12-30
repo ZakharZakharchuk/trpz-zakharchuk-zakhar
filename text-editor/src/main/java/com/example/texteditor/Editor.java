@@ -110,7 +110,7 @@ public class Editor {
         menuBar.add(helpMenu);
         menuBar.add(bookmarkMenu);
         helpMenuItem.addActionListener(e -> {
-            new InfoService().openNewWindow("http://localhost:8080/info");
+            new InfoService().openNewWindow();
         });
 
         lineNumbers = new LineNumberService(textPane, bookmarks);
